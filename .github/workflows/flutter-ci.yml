@@ -1,24 +1,68 @@
-name: Full Flutter CI
+name: Flutter CI
 
 on:
-  workflow_dispatch:
-  pull_request:
-    paths-ignore:
-    - "docs/**"
-    - "README.md"
   push:
-    branches:
-      - master
-    paths-ignore:
-      - ".github/**"
-      - "docs/**"
-      - "README.md"
-      - "res/**"
-      - "appimage/**"
-      - "flatpak/**"
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  run-ci:
-    uses: ./.github/workflows/flutter-build.yml
-    with:
-      upload-artifact: false
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.3'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          flutter build windows --release
+          Compress-Archive -Path build/windows/x64/runner/Release/* -Destination rustdesk-windows-x64.zip
+
+      - name: Build Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          flutter build linux --release
+          zip -r rustdesk-linux-x64.zip build/linux/x64/release/bundle/*
+
+      - name: Build macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          flutter build macos --release
+          zip -r rustdesk-macos-x64.zip build/macos/Build/Products/Release/*
+
+      - name: Upload Windows Artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-windows-x64
+          path: rustdesk-windows-x64.zip
+
+      - name: Upload Linux Artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-linux-x64
+          path: rustdesk-linux-x64.zip
+
+      - name: Upload macOS Artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-macos-x64
+          path: rustdesk-macos-x64.zip

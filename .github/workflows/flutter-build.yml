@@ -9,6 +9,8 @@ on:
       upload-tag:
         type: string
         default: "nightly"
+            # 👇 新增这一行，解锁手动触发
+    workflow_dispatch:
 
 # NOTE: F-Droid builder script 'flutter/build_fdroid.sh' reads environment
 # variables from this workflow!
@@ -18,6 +20,11 @@ on:
 # in this file!
 
 env:
+  # 👇 你的自定义服务器配置，直接复制
+  RUSTDESK_RENDEZVOUS_SERVER: "rustdesk.yyxxit.cn"
+  RUSTDESK_RELAY_SERVER: "rustdesk.yyxxit.cn"
+  RUSTDESK_KEY: "TvUw431C2oIkxbNjm6Ut3R3IvlgjlbguUI7SeY39fQI="
+  RUSTDESK_DISABLE_NETWORK_SETTINGS: "true"
   SCITER_RUST_VERSION: "1.75" # https://github.com/rustdesk/rustdesk/discussions/7503, also 1.78 has ABI change which causes our sciter version not working, https://blog.rust-lang.org/2024/03/30/i128-layout-update.html
   RUST_VERSION: "1.75" # sciter failed on m1 with 1.78 because of https://blog.rust-lang.org/2024/03/30/i128-layout-update.html
   MAC_RUST_VERSION: "1.81" # 1.81 is requred for macos, because of https://github.com/yury/cidre requires 1.81
